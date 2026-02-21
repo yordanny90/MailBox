@@ -176,7 +176,6 @@ class MailBox{
 	 */
 	public function close(){
         if($this->ping()) imap_close($this->imap_stream);
-        $this->ping();
         $this->mailbox='';
         $this->imap_stream=null;
 		return true;
