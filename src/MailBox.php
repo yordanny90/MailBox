@@ -3,7 +3,7 @@
  * Librería MailBox
  * Yordanny Mejías Venegas.
  * Creado: 2018-08-14
- * Modificado: 2026-02-17
+ * Modificado: 2026-02-20
  * @link https://github.com/yordanny90/MailBox
  */
 if(!function_exists('imap_open')){
@@ -108,8 +108,10 @@ class MailBox{
 	}
 
 	protected function is_opened(){
-		if(!is_resource($this->imap_stream) && !is_a($this->imap_stream, IMAP\Connection::class)) return false;
-		return true;
+		if(!$this->imap_stream) return false;
+		$open=!function_exists('imap_is_open') || imap_is_open($this->imap_stream);
+		if(!$open) $this->imap_stream=null;
+		return $open;
 	}
 
 	protected function getcfg($extra=''){
@@ -141,8 +143,9 @@ class MailBox{
 	 */
 	public function ping(){
 		if(!$this->is_opened()) return false;
-		$res=imap_ping($this->imap_stream);
-		return $res;
+		$ping=imap_ping($this->imap_stream);
+		if(!$ping) $this->imap_stream=null;
+		return $ping;
 	}
 
 	public function open($username, $password, $mailbox='INBOX', $cfg=null, int $flags=0){
@@ -172,13 +175,11 @@ class MailBox{
 	 * @see imap_close()
 	 */
 	public function close(){
-		if(!$this->ping()) return false;
-		$close=imap_close($this->imap_stream);
-		if($close){
-			$this->mailbox='';
-            $this->imap_stream=null;
-		}
-		return $close;
+        if($this->ping()) imap_close($this->imap_stream);
+        $this->ping();
+        $this->mailbox='';
+        $this->imap_stream=null;
+		return true;
 	}
 
 	public function expunge(){
@@ -353,11 +354,11 @@ class MailBox{
 
 	public static function &mime_decode(&$var,$enc){
 		if($enc==ENC7BIT){
-			//                $var=imap_utf7_decode($var);
+			//$var=imap_utf7_decode($var);
 		}elseif($enc==ENC8BIT){
-			//                $var=imap_base64(imap_binary($var));
+			//$var=imap_base64(imap_binary($var));
 		}elseif($enc==ENCBINARY){
-			//                $var=imap_binary($var);
+			//$var=imap_binary($var);
 		}elseif($enc==ENCBASE64){
 			$var=imap_base64($var);
 		}elseif($enc==ENCQUOTEDPRINTABLE){
